@@ -1,0 +1,377 @@
+#include <WiFi.h>
+#include <WebServer.h>
+#include <SoftwareSerial.h>
+#include <LoRa.h>
+
+// =====================================================
+// BeaconMe Survivor Node
+// ESP32-C6 + WiFi UI + LoRa RF SOS transmitter
+// =====================================================
+
+#define LORA_RX_PIN 15
+#define LORA_TX_PIN 23
+
+#define SOS_BUTTON_PIN 6
+
+#define USE_STATUS_LED 0
+#define STATUS_LED_PIN 8
+
+SoftwareSerial LoRa_rf(LORA_RX_PIN, LORA_TX_PIN);
+WebServer server(80);
+
+// ---------------- WIFI CONFIG ----------------
+const char* AP_SSID = "BeaconMe_Survivor";
+const char* AP_PASS = "12345678";
+
+// ---------------- SOS DATA ----------------
+int survivorNodeId = 1;
+
+// Default demo location
+float latitude = 6.92710;
+float longitude = 79.86119;
+
+// Emergency type:
+// 1 = Medical
+// 2 = Fire
+// 3 = Flood
+// 4 = Trapped
+// 5 = Security Threat
+int emergencyType = 1;
+
+// Message code:
+// 1 = Need rescue
+// 2 = Injured
+// 3 = Trapped
+// 4 = Need medicine
+// 5 = Unconscious
+// 6 = Fire nearby
+int messageCode = 1;
+
+// Danger level:
+// 1 = Low
+// 2 = Moderate
+// 3 = Serious
+// 4 = High
+// 5 = Critical
+int dangerLevel = 5;
+
+// Survivor node always starts hop count from 0
+const int START_HOP_COUNT = 0;
+
+String lastPacket = "No SOS packet sent yet.";
+String lastSendSource = "None";
+
+bool lastButtonState = HIGH;
+unsigned long lastDebounceTime = 0;
+const unsigned long debounceDelayMs = 80;
+
+String selectedAttr(int value, int current) {
+  if (value == current) {
+    return " selected";
+  }
+  return "";
+}
+
+String emergencyTypeName(int code) {
+  if (code == 1) return "Medical";
+  if (code == 2) return "Fire";
+  if (code == 3) return "Flood";
+  if (code == 4) return "Trapped";
+  if (code == 5) return "Security Threat";
+  return "Unknown";
+}
+
+String messageCodeName(int code) {
+  if (code == 1) return "Need rescue";
+  if (code == 2) return "Injured";
+  if (code == 3) return "Trapped";
+  if (code == 4) return "Need medicine";
+  if (code == 5) return "Unconscious";
+  if (code == 6) return "Fire nearby";
+  return "Unknown";
+}
+
+String dangerLevelName(int code) {
+  if (code == 1) return "Low";
+  if (code == 2) return "Moderate";
+  if (code == 3) return "Serious";
+  if (code == 4) return "High";
+  if (code == 5) return "Critical";
+  return "Unknown";
+}
+
+String buildSosPacket() {
+  int32_t latE5 = (int32_t)(latitude * 100000.0);
+  int32_t lonE5 = (int32_t)(longitude * 100000.0);
+
+  String packet = "";
+  packet += "S";
+  packet += ",";
+  packet += String(survivorNodeId);
+  packet += ",";
+  packet += String(latE5);
+  packet += ",";
+  packet += String(lonE5);
+  packet += ",";
+  packet += String(emergencyType);
+  packet += ",";
+  packet += String(messageCode);
+  packet += ",";
+  packet += String(dangerLevel);
+  packet += ",";
+  packet += String(START_HOP_COUNT);
+
+  return packet;
+}
+
+void blinkStatus() {
+#if USE_STATUS_LED
+  digitalWrite(STATUS_LED_PIN, HIGH);
+  delay(100);
+  digitalWrite(STATUS_LED_PIN, LOW);
+#endif
+}
+
+void sendSosPacket(String source) {
+  String packet = buildSosPacket();
+
+  lastPacket = packet;
+  lastSendSource = source;
+
+  Serial.println();
+  Serial.println("========== BeaconMe SOS SENT ==========");
+  Serial.print("Source: ");
+  Serial.println(source);
+  Serial.print("LoRa Packet: ");
+  Serial.println(packet);
+  Serial.println("=======================================");
+
+  for (int i = 0; i < 3; i++) {
+    LoRa_rf.println(packet);
+    blinkStatus();
+    delay(300);
+  }
+}
+
+void updateValuesFromRequest() {
+  if (server.hasArg("node")) {
+    survivorNodeId = server.arg("node").toInt();
+  }
+
+  if (server.hasArg("lat")) {
+    latitude = server.arg("lat").toFloat();
+  }
+
+  if (server.hasArg("lon")) {
+    longitude = server.arg("lon").toFloat();
+  }
+
+  if (server.hasArg("etype")) {
+    emergencyType = server.arg("etype").toInt();
+  }
+
+  if (server.hasArg("msg")) {
+    messageCode = server.arg("msg").toInt();
+  }
+
+  if (server.hasArg("danger")) {
+    dangerLevel = server.arg("danger").toInt();
+  }
+}
+
+void handleSend() {
+  updateValuesFromRequest();
+  sendSosPacket("BeaconMe WiFi UI");
+
+  server.sendHeader("Location", "/?sent=1");
+  server.send(303);
+}
+
+void addOption(String& html, int value, int current, String label) {
+  html += "<option value='";
+  html += String(value);
+  html += "'";
+  html += selectedAttr(value, current);
+  html += ">";
+  html += label;
+  html += "</option>";
+}
+
+void handleRoot() {
+  bool showConfirmation = server.hasArg("sent");
+
+  String html = "";
+
+  html += "<!DOCTYPE html><html><head>";
+  html += "<meta name='viewport' content='width=device-width, initial-scale=1'>";
+  html += "<title>BeaconMe Survivor Node</title>";
+
+  html += "<style>";
+  html += "body{font-family:Arial;background:#101014;color:#eee;margin:20px;}";
+  html += "h1{color:#ff4444;margin-bottom:4px;}";
+  html += "h2{margin-top:0;}";
+  html += ".subtitle{color:#aaa;margin-top:0;margin-bottom:18px;}";
+  html += ".card{background:#1e1e26;padding:16px;border-radius:14px;margin-bottom:16px;box-shadow:0 0 12px rgba(0,0,0,0.25);}";
+  html += ".ok{background:#123d1f;border:1px solid #35d66b;color:#caffd9;}";
+  html += "label{font-weight:bold;display:block;margin-top:8px;}";
+  html += "input,select{width:100%;padding:11px;margin:6px 0 12px 0;border-radius:8px;border:1px solid #555;background:#2b2b35;color:#fff;box-sizing:border-box;}";
+  html += "button{width:100%;padding:15px;border:0;border-radius:10px;background:#ff3333;color:white;font-size:18px;font-weight:bold;}";
+  html += "button:active{background:#cc2222;}";
+  html += "code{color:#66ccff;word-break:break-all;}";
+  html += ".small{font-size:13px;color:#aaa;}";
+  html += ".tag{display:inline-block;background:#333;padding:5px 8px;border-radius:8px;margin:2px;}";
+  html += "</style>";
+
+  html += "</head><body>";
+
+  html += "<h1>BeaconMe</h1>";
+  html += "<p class='subtitle'>Survivor LoRa SOS Node</p>";
+
+  if (showConfirmation) {
+    html += "<div class='card ok'>";
+    html += "<h2>SOS Sent Successfully</h2>";
+    html += "<p>BeaconMe emergency packet transmitted through LoRa RF.</p>";
+    html += "<p><b>Hop Count:</b> 0</p>";
+    html += "<p><b>Packet:</b><br><code>";
+    html += lastPacket;
+    html += "</code></p>";
+    html += "</div>";
+  }
+
+  html += "<div class='card'>";
+  html += "<p><b>WiFi SSID:</b> ";
+  html += AP_SSID;
+  html += "</p>";
+  html += "<p><b>Dashboard:</b> 192.168.4.1</p>";
+  html += "<p><b>Last Send Source:</b> ";
+  html += lastSendSource;
+  html += "</p>";
+  html += "<p><b>Last LoRa SOS Packet:</b><br><code>";
+  html += lastPacket;
+  html += "</code></p>";
+  html += "</div>";
+
+  html += "<div class='card'>";
+  html += "<form action='/send' method='GET'>";
+
+  html += "<label>Survivor Node ID</label>";
+  html += "<input name='node' type='number' min='1' max='9' value='";
+  html += String(survivorNodeId);
+  html += "'>";
+
+  html += "<label>Latitude</label>";
+  html += "<input name='lat' value='";
+  html += String(latitude, 5);
+  html += "'>";
+
+  html += "<label>Longitude</label>";
+  html += "<input name='lon' value='";
+  html += String(longitude, 5);
+  html += "'>";
+
+  html += "<label>Emergency Type</label>";
+  html += "<select name='etype'>";
+  addOption(html, 1, emergencyType, "1 - Medical");
+  addOption(html, 2, emergencyType, "2 - Fire");
+  addOption(html, 3, emergencyType, "3 - Flood");
+  addOption(html, 4, emergencyType, "4 - Trapped");
+  addOption(html, 5, emergencyType, "5 - Security Threat");
+  html += "</select>";
+
+  html += "<label>Message Code</label>";
+  html += "<select name='msg'>";
+  addOption(html, 1, messageCode, "1 - Need rescue");
+  addOption(html, 2, messageCode, "2 - Injured");
+  addOption(html, 3, messageCode, "3 - Trapped");
+  addOption(html, 4, messageCode, "4 - Need medicine");
+  addOption(html, 5, messageCode, "5 - Unconscious");
+  addOption(html, 6, messageCode, "6 - Fire nearby");
+  html += "</select>";
+
+  html += "<label>Danger Level</label>";
+  html += "<select name='danger'>";
+  addOption(html, 1, dangerLevel, "1 - Low");
+  addOption(html, 2, dangerLevel, "2 - Moderate");
+  addOption(html, 3, dangerLevel, "3 - Serious");
+  addOption(html, 4, dangerLevel, "4 - High");
+  addOption(html, 5, dangerLevel, "5 - Critical");
+  html += "</select>";
+
+  html += "<button type='submit'>SEND BEACONME SOS</button>";
+
+  html += "</form>";
+  html += "</div>";
+
+  html += "<div class='card small'>";
+  html += "<p><span class='tag'>Type: ";
+  html += emergencyTypeName(emergencyType);
+  html += "</span></p>";
+
+  html += "<p><span class='tag'>Message: ";
+  html += messageCodeName(messageCode);
+  html += "</span></p>";
+
+  html += "<p><span class='tag'>Danger: ";
+  html += dangerLevelName(dangerLevel);
+  html += "</span></p>";
+
+  html += "<p><span class='tag'>Starting Hop Count: 0</span></p>";
+
+  html += "<p>The physical SOS button sends the latest saved BeaconMe form values.</p>";
+  html += "</div>";
+
+  html += "</body></html>";
+
+  server.send(200, "text/html", html);
+}
+
+void setup() {
+  Serial.begin(115200);
+  delay(500);
+
+  LoRa_rf.begin(9600);
+
+  pinMode(SOS_BUTTON_PIN, INPUT_PULLUP);
+
+#if USE_STATUS_LED
+  pinMode(STATUS_LED_PIN, OUTPUT);
+  digitalWrite(STATUS_LED_PIN, LOW);
+#endif
+
+  WiFi.mode(WIFI_AP);
+  WiFi.softAP(AP_SSID, AP_PASS);
+
+  Serial.println();
+  Serial.println("BeaconMe Survivor Node Started");
+  Serial.print("WiFi SSID: ");
+  Serial.println(AP_SSID);
+  Serial.print("WiFi Password: ");
+  Serial.println(AP_PASS);
+  Serial.print("Dashboard IP: ");
+  Serial.println(WiFi.softAPIP());
+
+  server.on("/", handleRoot);
+  server.on("/send", handleSend);
+  server.begin();
+
+  Serial.println("BeaconMe WiFi dashboard started");
+}
+
+void loop() {
+  server.handleClient();
+
+  bool reading = digitalRead(SOS_BUTTON_PIN);
+
+  if (reading != lastButtonState) {
+    lastDebounceTime = millis();
+  }
+
+  if ((millis() - lastDebounceTime) > debounceDelayMs) {
+    if (reading == LOW && lastButtonState == HIGH) {
+      sendSosPacket("Physical SOS Button");
+      delay(1000);
+    }
+  }
+
+  lastButtonState = reading;
+}
