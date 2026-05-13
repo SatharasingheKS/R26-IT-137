@@ -1,0 +1,7 @@
+
+Real-
+python predict.py --packet S,1,692710,7986119,1,1,5,1
+
+
+Fake-
+python predict.py --packet S,0,692710,-7986119,1,1,0,0

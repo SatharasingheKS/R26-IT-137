@@ -1,0 +1,99 @@
+BeaconMe ML Training Report
+============================================================
+Dataset file: beaconme_synth_dataset.csv
+Total samples: 100000
+Training samples: 75000
+Testing samples: 25000
+
+Feature columns:
+node_id, latitude, longitude, emergency_type, message_code, danger_level, hop_count
+
+
+Model: Logistic Regression
+------------------------------------------------------------
+Accuracy: 0.6422
+
+Classification Report:
+              precision    recall  f1-score   support
+
+    CRITICAL       0.73      0.83      0.78      6779
+        FAKE       0.76      0.57      0.65      7538
+        HIGH       0.64      0.62      0.63      5196
+         LOW       0.16      0.84      0.27       518
+      MEDIUM       0.63      0.49      0.55      4969
+
+    accuracy                           0.64     25000
+   macro avg       0.58      0.67      0.58     25000
+weighted avg       0.69      0.64      0.65     25000
+
+
+Confusion Matrix:
+[[4323  519  704  553 1439]
+ [   0  433   85    0    0]
+ [  87 1676 2424  782    0]
+ [ 649   18  657 3247  625]
+ [ 624    0    0  526 5629]]
+Labels order:
+['FAKE', 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL']
+
+
+Model: Decision Tree
+------------------------------------------------------------
+Accuracy: 0.8561
+
+Classification Report:
+              precision    recall  f1-score   support
+
+    CRITICAL       0.90      0.88      0.89      6779
+        FAKE       1.00      0.94      0.97      7538
+        HIGH       0.74      0.82      0.78      5196
+         LOW       0.37      0.93      0.53       518
+      MEDIUM       0.85      0.72      0.78      4969
+
+    accuracy                           0.86     25000
+   macro avg       0.77      0.86      0.79     25000
+weighted avg       0.88      0.86      0.86     25000
+
+
+Confusion Matrix:
+[[7096   50  118  102  172]
+ [   0  483   35    0    0]
+ [   2  760 3576  631    0]
+ [   1    0  458 4263  474]
+ [   0    0    0  795 5984]]
+Labels order:
+['FAKE', 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL']
+
+
+Model: Random Forest
+------------------------------------------------------------
+Accuracy: 0.8642
+
+Classification Report:
+              precision    recall  f1-score   support
+
+    CRITICAL       0.88      0.92      0.90      6779
+        FAKE       1.00      0.98      0.99      7538
+        HIGH       0.78      0.74      0.76      5196
+         LOW       0.37      0.93      0.53       518
+      MEDIUM       0.85      0.74      0.79      4969
+
+    accuracy                           0.86     25000
+   macro avg       0.78      0.86      0.79     25000
+weighted avg       0.88      0.86      0.87     25000
+
+
+Confusion Matrix:
+[[7408   53   66   11    0]
+ [   0  482   36    0    0]
+ [   0  773 3656  540    0]
+ [   0    0  522 3845  829]
+ [   0    0    0  564 6215]]
+Labels order:
+['FAKE', 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL']
+
+
+Best Model
+============================================================
+Best model: Random Forest
+Best accuracy: 0.8642
