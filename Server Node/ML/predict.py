@@ -64,7 +64,7 @@ def predict_packet(packet):
 
     X = pd.DataFrame([features], columns=feature_columns)
 
-    prediction = model.predict(X)[0] 
+    prediction = model.predict(X)[0]
 
     confidence = None
     probabilities_table = None
@@ -161,7 +161,7 @@ def main():
     parser.add_argument(
         "--packet",
         type=str,
-        default="S,1,692710,7986119,1,1,5,1",
+        default="S,1,692710,7986119,2,1,5,1",
         help="BeaconMe packet: S,node_id,latE5,lonE5,emergency_type,message_code,danger_level,hop_count",
     )
 
