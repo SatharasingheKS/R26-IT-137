@@ -8,7 +8,10 @@
 
 SoftwareSerial LoRa_rf(D5, D6);
 
-#define LED_PIN LED_BUILTIN
+// External status LEDs (wired active-HIGH through a current-limiting resistor).
+#define GREEN_LED_PIN  D1
+#define YELLOW_LED_PIN D2
+#define RED_LED_PIN    D3
 
 // BeaconMe SOS packet format:
 // S,node_id,latE5,lonE5,emergency_type,message_code,danger_level,hop_count
@@ -99,10 +102,10 @@ bool isValidBeaconMeSosPacket(String packet, String fields[]) {
   return true;
 }
 
-void blinkLed() {
-  digitalWrite(LED_PIN, LOW);
+void blinkReceiveLed() {
+  digitalWrite(RED_LED_PIN, HIGH);
   delay(80);
-  digitalWrite(LED_PIN, HIGH);
+  digitalWrite(RED_LED_PIN, LOW);
 }
 
 void printPacketDetails(String fields[]) {
@@ -158,8 +161,14 @@ void setup() {
   Serial.begin(115200);
   LoRa_rf.begin(9600);
 
-  pinMode(LED_PIN, OUTPUT);
-  digitalWrite(LED_PIN, HIGH);
+  pinMode(GREEN_LED_PIN, OUTPUT);
+  pinMode(YELLOW_LED_PIN, OUTPUT);
+  pinMode(RED_LED_PIN, OUTPUT);
+
+  // Green shows that the receiver node is powered; yellow is intentionally unused.
+  digitalWrite(GREEN_LED_PIN, HIGH);
+  digitalWrite(YELLOW_LED_PIN, LOW);
+  digitalWrite(RED_LED_PIN, LOW);
 
   Serial.println();
   Serial.println("BeaconMe Server Receiver Node Started");
@@ -175,19 +184,22 @@ void loop() {
       return;
     }
 
+    // Flash red for every non-empty message received from the link,
+    // including packets that fail the BeaconMe format validation below.
+    blinkReceiveLed();
+
     String fields[8];
 
     if (!isValidBeaconMeSosPacket(packet, fields)) {
-      Serial.print("BAD:");
-      Serial.println(packet);
+      //Serial.print("BAD:");
+      //Serial.println(packet);
       return;
     }
 
-    Serial.print("PKT:");
+    //Serial.print("PKT:");
     Serial.println(packet);
 
-    printPacketDetails(fields);
+    //printPacketDetails(fields);
 
-    blinkLed();
   }
 }
