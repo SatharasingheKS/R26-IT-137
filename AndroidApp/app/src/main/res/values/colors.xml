@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <color name="teal_primary">#0D9488</color>
+    <color name="teal_primary_dark">#0F766E</color>
+    <color name="teal_light">#5EEAD4</color>
+    <color name="amber_accent">#F59E0B</color>
+
+    <!-- Emergency Specific Palette -->
+    <color name="emergency_sos">#EF4444</color>
+    <color name="emergency_critical">#DC2626</color>
+    <color name="emergency_medical">#EC4899</color>
+    <color name="emergency_fire">#F97316</color>
+    <color name="emergency_flood">#0EA5E9</color>
+    <color name="emergency_trapped">#F59E0B</color>
+
+    <!-- Danger Level Spectrum -->
+    <color name="danger_1_low">#10B981</color>
+    <color name="danger_2_moderate">#EAB308</color>
+    <color name="danger_3_serious">#F97316</color>
+    <color name="danger_4_high">#EF4444</color>
+    <color name="danger_5_critical">#991B1B</color>
+
+    <!-- Dark Theme Modern Slate Palette -->
+    <color name="bg_dark">#0F172A</color>
+    <color name="card_dark">#1E293B</color>
+    <color name="card_dark_stroke">#334155</color>
+    <color name="text_primary_dark">#F8FAFC</color>
+    <color name="text_secondary_dark">#94A3B8</color>
+
+    <color name="surface_light">#F8FAFC</color>
+    <color name="surface_card">#FFFFFF</color>
+    <color name="text_primary">#0F172A</color>
+    <color name="text_secondary">#64748B</color>
+    <color name="divider">#E2E8F0</color>
+</resources>

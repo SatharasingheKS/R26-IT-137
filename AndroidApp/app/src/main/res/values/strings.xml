@@ -1,0 +1,48 @@
+<resources>
+    <string name="app_name">BeaconMe SOS</string>
+    <string name="dashboard_title">Survivor Monitor</string>
+    <string name="status_connected">ONLINE</string>
+    <string name="status_connecting">CONNECTING…</string>
+    <string name="status_offline">OFFLINE</string>
+    <string name="status_demo">SIMULATION MODE</string>
+
+    <string name="label_emergency_active">EMERGENCY SOS ACTIVE</string>
+    <string name="label_monitoring">STANDBY MONITORING</string>
+    <string name="label_node_id">Node #%1$d</string>
+    <string name="label_danger_level">DANGER LEVEL %1$d: %2$s</string>
+
+    <string name="card_gps_title">GPS &amp; Location Fix</string>
+    <string name="card_telemetry_title">LoRa Mesh Telemetry</string>
+
+    <string name="btn_open_maps">Open in Maps</string>
+    <string name="btn_copy_coords">Copy GPS</string>
+    <string name="btn_copy_packet">Copy Packet</string>
+    <string name="btn_web_view">ESP Web View</string>
+    <string name="btn_refresh">Refresh Now</string>
+    <string name="btn_config_endpoint">Endpoint IP</string>
+
+    <string name="label_satellites">%1$d Satellites</string>
+    <string name="label_gps_valid">Valid 3D Fix</string>
+    <string name="label_gps_invalid">No Fix / Searching</string>
+
+    <string name="label_packets">%1$d Packets Transmitted</string>
+    <string name="label_pulse_sec">%1$d sec ago</string>
+    <string name="label_hop_count">Mesh Hops: %1$d</string>
+    <string name="label_pulse_interval">Interval: %1$d ms</string>
+    <string name="label_last_source">Source: %1$s</string>
+    <string name="label_raw_packet">Raw LoRa Packet</string>
+
+    <string name="demo_mode_switch">Demo Simulator</string>
+    <string name="dialog_ip_title">ESP32 Node IP / Endpoint</string>
+    <string name="dialog_ip_hint">e.g. http://192.168.4.1/api/data</string>
+    <string name="toast_copied">Copied to clipboard!</string>
+    <string name="toast_maps_error">No Map app found on device</string>
+    <string name="error_url_invalid">Enter a valid URL</string>
+    <string name="hint_device_name">Device name</string>
+    <string name="hint_device_url">Web URL (e.g. 192.168.4.1)</string>
+    <string name="content_desc_more">More options</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="webview_loading">Loading ESP Dashboard…</string>
+    <string name="webview_error">Could not connect to node</string>
+</resources>
